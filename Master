@@ -44,7 +44,18 @@ head(data1)
 str(data1)
 summary(data1)
 
-#create the model, choosing 2 variables to examine
+#For modeling, you will want to create a training and test data set
+set.seed(1)      # setting the seed will allow you to adjust the random datasset in training, or keep the same data
+in_train = createDataPartition(y = data1$var_1, p = 0.75, list = FALSE)    # Puts 75% of observations in the training dataset
+head(in_train)    # row indices of observations in the training dataset
+
+train = data1[in_train, ]
+test = data1[-in_train, ]
+
+dim(train)
+dim(test)
+
+#create the linear regression model, choosing 2 variables to examine
 
 model <- lm(var_1 ~ var_2, data = data1)    #produces the linear model between the two var.
 attributes(model)                           # returns list of all things inside the model, handy for calling specific elements later
