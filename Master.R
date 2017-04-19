@@ -60,10 +60,11 @@ dim(test)
 
 ### create the linear regression model, choosing 2 variables to examine
 
+qplot(data1$var_1, data1$var_2, data = data1, color=data1$var_2) #scatter plot of 2 model variables
 model <- lm(var_1 ~ var_2, data = data1)    #produces the linear model between the two var.
 attributes(model)                           # returns list of all things inside the model, handy for calling specific elements later
 summary(model)                              # gives you the residuals and coefficients of the linear model
-ggplot(data1, aes(x = var_1, y = var_2)) +  # creates scatter plot
+ggplot(data1, aes(x = var_1, y = var_2)) +  # creates scatter plot with linear model
   geom_smooth(method = 'lm') +
   geom_point(size = 1, alpha = 0.60) +
   #facet_grid(season ~. ) +                 # provides additional graphs breakdown by additional dimension
