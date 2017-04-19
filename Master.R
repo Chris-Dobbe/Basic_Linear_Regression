@@ -84,7 +84,7 @@ summary(model2)             # Output will show how each var_2 and var_3 correlat
 
 ### below chart plots two variables, and adds size and color of point for a 3rd variable
 
-ggplot(bike, aes(y = var_4, x = var_5)) +
+ggplot(data1, aes(y = var_4, x = var_5)) +
   geom_smooth(method = 'lm', se = FALSE, color = 'black') + 
   geom_point(aes(color = var_1, size = var_1), alpha = 0.70) +
   #facet_grid(season ~. ) + 
@@ -102,10 +102,20 @@ qqline(residuals(model)) # additional residual plot
 
 ### Confidence Intervals for a linear model to predict values
 
-plot(data1$mpg, data1$hp)
+plot(data1$Var_1, data1$var_2)
 ci <- confint(model, level=0.95) #creates the confidence interval, using a specified sign. level
 ci                               
 lower_est = ci[1] * 9 + ci[2]  #creates lowest estimate for the x/y value based on where the *x is
 lower_est                       #estimating x or y depends on where the *x goes, on 1sr or 2nd ci[]
 upper_est = ci[3] * 9 + ci[4]  #creates upper estimate for x/y value 
 upper_est
+
+#resulting outputs are the upper and lower bounds based on foncidence intervals from linear model
+
+### predicting values with a generalized linear function, aka declaring multiple values to determine 1
+
+gen_model <- glm(var_1 ~ var_2 + var_3, data=data1, family=poisson) #family is a type of general linear model
+params <- data.frame(var_2=110, var_3=160)   #creates the predicting parameters based on the model created
+predict(gen_model, params, type="response")  
+
+# resulting output is the estimated number of cylinders (var_1) based on historical data in model
