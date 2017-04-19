@@ -92,3 +92,10 @@ ggplot(bike, aes(y = var_4, x = var_5)) +
   scale_size(range = c(0, 15)) + 
   theme_minimal()
 
+# explore the residuals further to understand their distribution and trend of linear model
+residuals(model)  # lists the distance from the mean for each observation in the model
+summary(residuals(model))
+plot(fitted(model), residuals(model))
+abline(h = 0)  #plots the residual values around the mean line of 0
+qqnorm(residuals(model))
+qqline(residuals(model)) # additional residual plot 
