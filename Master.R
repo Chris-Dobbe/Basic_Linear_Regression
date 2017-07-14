@@ -1,6 +1,7 @@
 ############################### Linear Regression Starter Script ############################
 
-# Uses the lm() linear regressions modeling and ggplot to calculate & visualize correlation
+# Uses the lm() linear regressions modeling and ggplot to calculate & visualize correlation between
+# two independent, quantitative variables
 
 # Begin by loading the data set and then choosing 2 or 3 variables to plug into the model
 
@@ -11,112 +12,95 @@
 ############################################################################################
 
 # begin by setting the working directory for the files
-setwd("C:/Users/*********/Documents/R")
+setwd("C:/Users/cdobbe/Documents/R")
 
 #Load the packages and libraries, or d/l any using install.packages("???")
 library(dplyr)
 library(magrittr)
 library(tidyr)
 library(readr)
-library(stringr)
 library(ggplot2)
-library(gridExtra)
-library(DescTools)
-library(RDCOMClient)  # For importing specific cells of Excel files
-library(gdata)  # for importing Excel files
-library(GGally)
-library(scales)
-library(caret)
+library(lattice) #still need to isntall this
 
-### Begin by loading in the dataset using the appropriate method, uncomment chosen method
 
-#data1 <- file.choose() # Allows for manual selection from folder location, paired with below
-  #data <- read_csv(data1)  # 
-#data1 <- read_csv("file_name.csv") #loads in the CSV to a tibble, easier to work with
-#data1 <- read.csv("file_name.csv")
-#data1 <- read.csv("file_name.tsv", sep = "\t", header = TRUE)
-#data1 <- read.xls("file_name.xlsx")
-#data1 <- XLGetRange(sheet = "sheet1", range = "A1:B21", header = TRUE) #only used when Excel workbook is open
+### Begin by loading in the dataset using the appropriate method
 
-#View dataset
-View(data1)
+#data1 <- file.choose() # Allows for manual selection from folder location
+data1 <- read.csv("pizza_data_frame3.csv", header=TRUE) #read in standard CSV
+#data1 <- read_csv("file_name.tsv", sep = "\t", header = TRUE) #read in TSV file
+#data1 <- read.delim("file_name.txt", sep = "\t", header = TRUE) #read in .txt files
+#data1 <- read.xls("file_name.xlsx") #read in Excel file
+#data1 <- XLGetRange(sheet = "sheet1", range = "A1:B21", header = TRUE) # used with Excel file being open
 
 ### View summary info on the dataset that was loaded in
-names(data1)
+View(data1)
+names(data)
 head(data1)
 str(data1)
 summary(data1)
 
-### For modeling, you will want to create a training and test data set
-set.seed(1)      # setting the seed will allow you to adjust the random dataset in training, or keep the same data by changing seed #
-in_train = createDataPartition(y = data1$var_1, p = 0.75, list = FALSE)    # Puts 75% of observations in the training dataset
-head(in_train)    # row indices of observations in the training dataset
+### First perform any data cleaning steps necessary to preapre the data set for modeling
 
-train = data1[in_train, ]
-test = data1[-in_train, ]
+### Remove any rows that have an N/A value within a specific column
+data1 <- data1 %>% drop_na(delivery_min)  #removes rows with NA in specific column
+data1 <- data1 %>% drop_na(temperature)
 
-dim(train)
-dim(test)
+### Before creating the linear model, varify the 3 Correlation Conditions visually
+# 1. Are you using quantitiative Variables?
+# 2. Is the scatter plot linear (use your best judgement)
+# 3. Are there any outliers or extreme points to consider?
 
-### create the linear regression model, choosing 2 variables to examine
+### First check linearity using a scatter plot, make x the predictor and y the response var.
+ggplot(data1, aes(x = data1$delivery_min, y = data1$temperature), color="black") + # creates scatter plot
+  geom_point(size = 1, alpha = 0.30)
 
-qplot(data1$var_1, data1$var_2, data = data1, color=data1$var_2) #scatter plot of 2 model variables
-model <- lm(var_1 ~ var_2, data = data1)    #produces the linear model between the two var.
-attributes(model)                           # returns list of all things inside the model, handy for calling specific elements later
-summary(model)                              # gives you the residuals and coefficients of the linear model
-ggplot(data1, aes(x = var_1, y = var_2)) +  # creates scatter plot with linear model
-  geom_smooth(method = 'lm') +
-  geom_point(size = 1, alpha = 0.60) +
-  #facet_grid(season ~. ) +                 # provides additional graphs breakdown by additional dimension
-  theme_minimal()
+### Next check for outliers using boxplots of your 2 variables
+par(mfrow=c(1, 2))
+boxplot(data1$delivery_min, main = "Delivery Speed", sub=paste("Outlier rows: ", boxplot.stats(data1$delivery_min)$out))
+boxplot(data1$temperature, main="Pizza Temperatue", sub=paste("Outlier rows: ", boxplot.stats(data1$temperature)$out))
 
-# Residual section contains summary of the distribution of the errors (distance between line and individual points)
-# Coefficients contains estimated coefficients, standard errors, t & p values for variables in model
-#   The (intercept) estimate is going to be the average value for the 1st variable
-#   2nd variable estimate is the pos/neg correlation, for every increase
-#     of 1 in the 2nd variable, the 1st variables goes up by the 2nd var. estimate
-#   we want to see a large t value >= 2.5, and a tiny p value to indicate correlation
+# If your two variables meet the 3 conditions, that move forward
 
-### This plot includes a 3rd variable in the plot, performing multivariate regression
-# produces same result as first model, but includes additional variable correlated with var. 1
+### We can check correlatoin between the two vairables first
+cor(data1$delivery_min, data1$temperature)
+#close to 1 or -1 is very strong correlation, close to 0 is no correlation
 
-model2 <- lm(var_1 ~ var_2 + var_3, data = data1)
-summary(model2)             # Output will show how each var_2 and var_3 correlate to var_1, using same metrics
+### create the linear model, choosing 2 variables to examine, with predictor (x) value on the left, response on the right
 
-### below chart plots two variables, and adds size and color of point for a 3rd variable
+model <- lm(data1$delivery_min ~ data1$temperature, data = data1) #produces the linear model between the two var.
+print(model) # provides linear equation values, y-intercept and slope
 
-ggplot(data1, aes(y = var_4, x = var_5)) +
-  geom_smooth(method = 'lm', se = FALSE, color = 'black') + 
-  geom_point(aes(color = var_1, size = var_1), alpha = 0.70) +
-  #facet_grid(season ~. ) + 
-  scale_colour_gradient(limits = c(2, 28540), low = 'blue', high = 'yellow') +
-  scale_size(range = c(0, 15)) + 
-  theme_minimal()
+qplot(data1$delivery_min, data1$temperature, data = data1) #quick plot of variables
+attributes(model) # returns list of all things inside the model, handy for calling specific elements later
+summary(model) # gives you the residuals and coefficients of the linear model
+#   Least Squares line equation values are in the first "estimates" column (mathces above 'print' line)
+#     (Intercept) value shows the y-intercept in the linear model
+#     Value below that, right of your response (y) value is the slope of the line
+#   R-squared value closer to 1 means the variability of the y value is strongly explained by the model (and x value)
+#   For stat. significance, we want both Pr(>|t|) values to be <0.05, and 3 stars ***
+#  High T value (>1.96) indicates the null hypothese (coefficients = 0) can be rejected for atl. hypothese (not = 0)
+#  Aka a high T value indicates there exists a reltionship between the predictor & response var.
 
-### explore the residuals further to understand their distribution and trend of linear model
-residuals(model)  # lists the distance from the mean for each observation in the model
-summary(residuals(model))
-plot(fitted(model), residuals(model))
-abline(h = 0)  #plots the residual values around the mean line of 0
-qqnorm(residuals(model))
-qqline(residuals(model)) # additional residual plot 
+# requires lattice, but should be a residual plot for x-values
+xyplot(resid(model) ~ fitted(model),
+       xlab = "Delivery Minutes",
+       ylab = "Pizza Temperature",
+       main = "Delivery time, pizza temp. Association",
+       panel = function(x,y, ...)
+         {
+         pane.grid(h = -1, v = -1)
+         panel.abline(h = 0)
+         panel.xyplot(x, y, ...)
+       })
 
-### Confidence Intervals for a linear model to predict values
+# Creates the scatter plot with the linear model 
+linregplot <- ggplot(data1, aes(x = data1$delivery_min, y = data1$temperature)) +
+  geom_smooth(method = 'lm', color= "red") +
+  geom_point(size = 1, alpha = 0.40)
+print(linregplot)
 
-plot(data1$Var_1, data1$var_2)
-ci <- confint(model, level=0.95) #creates the confidence interval, using a specified sign. level
-ci                               
-lower_est = ci[1] * 9 + ci[2]  #creates lowest estimate for the x/y value based on where the *x is
-lower_est                       #estimating x or y depends on where the *x goes, on 1sr or 2nd ci[]
-upper_est = ci[3] * 9 + ci[4]  #creates upper estimate for x/y value 
-upper_est
+### This should provide you with all of the information and visual needed for your linear model
 
-#resulting outputs are the upper and lower bounds based on foncidence intervals from linear model
+### Once completing your code, export a CSV to a specified location
+write.csv(data1, "/Users/cdobbe/Documents/R/output csv files/X_linear_model_data.csv")
 
-### predicting values with a generalized linear function, aka declaring multiple values to determine 1
-
-gen_model <- glm(var_1 ~ var_2 + var_3, data=data1, family=poisson) #family is a type of general linear model
-params <- data.frame(var_2=110, var_3=160)   #creates the predicting parameters based on the model created
-predict(gen_model, params, type="response")  
-
-# resulting output is the estimated number of cylinders (var_1) based on historical data in model
